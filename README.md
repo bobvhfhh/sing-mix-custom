@@ -13,7 +13,7 @@ https://raw.githubusercontent.com/bobvhfhh/sing-mix-custom/refs/heads/main/sing-
 
 GitHub Actions 每周一检查 [上游 Origin 脚本](https://github.com/Sakyvo/sing-mix/blob/main/sing-mix_origin)。发现上游有变化时，会调用你配置的 AI 服务比较上游与当前脚本，生成择优更新候选；通过 JavaScript 语法检查，并确认以下 Cloudflare 规则仍保留：精确匹配 `challenges.cloudflare.com`、后缀匹配 `cloudflarechallenge.com`，以及验证流量走 `main` 代理组。之后 Action 会把候选脚本和上游快照推到自动分支并创建或更新 PR。
 
-工作流不会自动合并。审查 PR 后，合并才会更新上方 Bettbox 使用的 `main` 脚本。即使 AI 判断某项上游变化不适合，也会在 PR 中说明并提供候选，需人工检查后再决定。
+工作流不会自动合并。审查 PR 并合并后，只会更新 GitHub 上方 Raw 链接对应的 `main` 脚本；Bettbox 中已保存的配置不会因此自动变化。要让新脚本在 Bettbox 生效，还需要在 Bettbox 中手动点击“同步”，让它通过该链接重新拉取最新内容。即使 AI 判断某项上游变化不适合，也会在 PR 中提供候选，需人工检查后再决定。
 
 该工作流使用 OpenAI Chat Completions 兼容接口，所以可接入支持此接口的中转服务或 DeepSeek。先确认你的服务商提供兼容的 `/chat/completions` 路径、Bearer 密钥认证和 `choices[0].message.content` 响应格式。
 
