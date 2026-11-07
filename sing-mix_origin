@@ -17,7 +17,10 @@ const BYPASS_DOMAINS = [
 
 // 强制代理
 const FORCE_PROXY_DOMAINS = [
-  "test.com", "test.org"
+  "test.com", "test.org",
+  "fonts.googleapis.com", "fonts.gstatic.com", "www.gstatic.com",
+  "c.pki.goog", "mtalk.google.com", "update.googleapis.com",
+  "recaptcha.net", "gravatar.loli.net"
 ];
 
 // 强制屏蔽
