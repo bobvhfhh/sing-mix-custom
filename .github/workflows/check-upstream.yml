@@ -1,0 +1,66 @@
+name: Check upstream sing-mix
+
+on:
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: check-sing-mix-upstream
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+
+      - name: Fetch upstream script
+        run: curl --fail --silent --show-error --location https://raw.githubusercontent.com/Sakyvo/sing-mix/main/sing-mix_origin --output upstream-sing-mix_origin
+
+      - name: Open or update review pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          branch="automation/upstream-sing-mix-origin"
+          pr_number="$(gh pr list --head "$branch" --base main --json number --jq '.[0].number')"
+
+          if [ -n "$pr_number" ]; then
+            gh pr checkout "$pr_number"
+          else
+            git switch --create "$branch"
+          fi
+
+          mkdir -p upstream
+          cp upstream-sing-mix_origin upstream/sing-mix_origin
+          rm upstream-sing-mix_origin
+
+          if git diff --quiet -- upstream/sing-mix_origin; then
+            echo "No upstream changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add upstream/sing-mix_origin
+          git commit -m "Update upstream sing-mix_origin snapshot"
+          git push --force-with-lease --set-upstream origin "$branch"
+
+          body_file="$(mktemp)"
+          cat > "$body_file" <<'EOF'
+          The upstream snapshot has changed. Review `upstream/sing-mix_origin` against the customized `sing-mix_origin` and selectively apply suitable changes.
+
+          This PR intentionally does not change the active customized script. Do not merge the snapshot as the active script without reviewing the diff and preserving the local Cloudflare routing change.
+          EOF
+
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" --title "Review upstream sing-mix_origin update" --body-file "$body_file"
+          else
+            gh pr create --base main --head "$branch" --title "Review upstream sing-mix_origin update" --body-file "$body_file"
+          fi
