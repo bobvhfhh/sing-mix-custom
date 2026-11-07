@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           branch="automation/upstream-sing-mix-origin"
-          pr_number="$(gh pr list --head "$branch" --base main --json number --jq '.[0].number')"
+          pr_number="$(gh pr list --head "$branch" --base main --json number --jq 'if length > 0 then .[0].number else empty end')"
 
           if [ -n "$pr_number" ]; then
             gh pr checkout "$pr_number"
