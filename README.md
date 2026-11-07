@@ -11,9 +11,11 @@ https://raw.githubusercontent.com/bobvhfhh/sing-mix-custom/refs/heads/main/sing-
 
 ## 自动 AI 更新
 
-GitHub Actions 每周一检查 [上游 Origin 脚本](https://github.com/Sakyvo/sing-mix/blob/main/sing-mix_origin)。发现上游有变化时，会调用你配置的 AI 服务比较上游与当前脚本，生成择优更新候选；通过 JavaScript 语法检查，并确认以下 Cloudflare 规则仍保留：精确匹配 `challenges.cloudflare.com`、后缀匹配 `cloudflarechallenge.com`，以及验证流量走 `main` 代理组。之后 Action 会把候选脚本和上游快照推到自动分支并创建或更新 PR。
+GitHub Actions 每周一检查 [上游 Origin 脚本](https://github.com/Sakyvo/sing-mix/blob/main/sing-mix_origin)。发现上游或候选脚本有变化时，会调用你配置的 AI 服务比较上游与当前脚本，生成择优更新候选；通过 JavaScript 语法检查，并确认 Cloudflare 规则及日志修复的 8 条精确代理规则仍保留。验证通过后，Action 会更新自动分支、创建或更新 PR，并自动合并到 `main`。如果 AI 调用或检查失败，流程会停止，不更改 `main`。
 
-工作流不会自动合并。审查 PR 并合并后，只会更新 GitHub 上方 Raw 链接对应的 `main` 脚本；Bettbox 中已保存的配置不会因此自动变化。要让新脚本在 Bettbox 生效，还需要在 Bettbox 中手动点击“同步”，让它通过该链接重新拉取最新内容。即使 AI 判断某项上游变化不适合，也会在 PR 中提供候选，需人工检查后再决定。
+自动合并后，GitHub 上方 Raw 链接对应的 `main` 脚本会更新；Bettbox 中已保存的配置不会因此自动变化。要让新脚本在 Bettbox 生效，还需要在 Bettbox 中手动点击“同步”，让它通过该链接重新拉取最新内容。
+
+首次启用自动合并时，需先通过一次 PR 将此工作流更新合入 `main`；之后上游脚本更新才会由 Action 自动处理。
 
 该工作流使用 OpenAI Chat Completions 兼容接口，所以可接入支持此接口的中转服务或 DeepSeek。先确认你的服务商提供兼容的 `/chat/completions` 路径、Bearer 密钥认证和 `choices[0].message.content` 响应格式。
 
