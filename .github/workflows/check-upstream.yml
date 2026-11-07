@@ -42,12 +42,28 @@ jobs:
 
       - name: Create AI review branch
         if: steps.pr.outputs.number == ''
-        run: git switch --create automation/ai-upstream-sing-mix-origin
+        run: |
+          branch="automation/ai-upstream-sing-mix-origin"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch origin "$branch"
+            git switch --create "$branch" --track "origin/$branch"
+          else
+            git switch --create "$branch"
+          fi
 
       - name: Check for upstream changes
         id: upstream
         run: |
+          git show origin/main:sing-mix_origin > /tmp/main-sing-mix_origin
+          upstream_changed=true
           if [ -f upstream/sing-mix_origin ] && cmp -s /tmp/upstream-sing-mix_origin upstream/sing-mix_origin; then
+            upstream_changed=false
+          fi
+          candidate_changed=false
+          if ! cmp -s sing-mix_origin /tmp/main-sing-mix_origin; then
+            candidate_changed=true
+          fi
+          if [ "$upstream_changed" = false ] && [ "$candidate_changed" = false ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -127,7 +143,7 @@ jobs:
           pathlib.Path("sing-mix_origin").write_text(text + "\n", encoding="utf-8")
           PY
 
-      - name: Validate candidate and update review PR
+      - name: Validate candidate and merge update PR
         if: steps.upstream.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -140,7 +156,15 @@ jobs:
           const required = [
             '"DOMAIN,challenges.cloudflare.com"',
             '"DOMAIN-SUFFIX,cloudflarechallenge.com"',
-            '"RULE-SET,cloudflare,main"'
+            '"RULE-SET,cloudflare,main"',
+            '"fonts.googleapis.com"',
+            '"fonts.gstatic.com"',
+            '"www.gstatic.com"',
+            '"c.pki.goog"',
+            '"mtalk.google.com"',
+            '"update.googleapis.com"',
+            '"recaptcha.net"',
+            '"gravatar.loli.net"'
           ];
           for (const rule of required) {
             if (!script.includes(rule)) throw new Error(`Required customized rule missing: ${rule}`);
@@ -151,7 +175,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add sing-mix_origin upstream/sing-mix_origin
-          git commit -m "AI review upstream sing-mix_origin update"
+          if ! git diff --cached --quiet; then
+            git commit -m "AI reviewed upstream sing-mix_origin update"
+          fi
           git push --force-with-lease --set-upstream origin "$branch"
 
           body_file="$(mktemp)"
@@ -161,12 +187,15 @@ jobs:
           - `upstream/sing-mix_origin`: exact upstream snapshot for comparison.
           - `sing-mix_origin`: AI-generated candidate, syntax-checked and checked for the required Cloudflare routing rules.
 
-          Review the diff before merging. This workflow never merges into `main` automatically.
+          The candidate passed JavaScript syntax validation and the required custom-rule checks. The workflow merges this PR automatically after those checks pass. If generation or validation fails, it stops without changing `main`.
           EOF
 
           pr_number="$(gh pr list --head "$branch" --base main --json number --jq 'if length > 0 then .[0].number else empty end')"
           if [ -n "$pr_number" ]; then
             gh pr edit "$pr_number" --title "AI-reviewed upstream sing-mix_origin update" --body-file "$body_file"
           else
-            gh pr create --base main --head "$branch" --title "AI-reviewed upstream sing-mix_origin update" --body-file "$body_file"
+            pr_url="$(gh pr create --base main --head "$branch" --title "AI-reviewed upstream sing-mix_origin update" --body-file "$body_file")"
+            pr_number="${pr_url##*/}"
           fi
+
+          gh pr merge "$pr_number" --squash
