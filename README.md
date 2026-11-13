@@ -28,3 +28,9 @@ GitHub Actions 每周一检查 [上游 Origin 脚本](https://github.com/Sakyvo/
 使用 DeepSeek 时，按 DeepSeek API 文档配置 Base URL、模型 ID 和对应 API Key；使用中转站时同样填写中转站提供的三项信息。GitHub Actions 会在检测到上游变更后将两份脚本发送给所配置的服务处理，因此应选用你信任的服务，并留意其数据和计费政策。API 用量由该 API 服务商计费，ChatGPT 订阅通常不包含 API 调用额度。
 
 可在仓库 **Actions → AI review upstream sing-mix → Run workflow** 手动触发检查。定时任务使用 GitHub Actions；若 Actions 因仓库长期无活动被停用，需要在 Actions 页面重新启用。
+
+### 审查本人创建的普通 PR
+
+`.github/workflows/review-own-pull-requests.yml` 会审查所有目标为 `main` 的非草稿 PR，检查修改脚本的 JavaScript 语法，将 PR 差异发送给上面配置的 AI 服务，并在 PR 下留言。AI 明确给出 `APPROVE` 且工作流步骤成功时，只有 `bobvhfhh` 或 `github-actions[bot]` 创建的 PR 才会自动以 squash 方式合并。其他账号的 PR 也会收到 AI 审查，但由维护者决定是否合并。拒绝、接口错误或语法检查失败都会阻止自动合并。该流程只审查普通 PR，不让 AI 改写 PR 文件。
+
+新增或修改此工作流后，必须先把包含它的 PR 手动合入 `main`。此后，目标为 `main` 的 PR 在新建、更新、重新打开或从草稿转为就绪时会触发审查。已经打开的 PR 不会因工作流刚合入而自动补跑；合入后可向该 PR 推送一次更新来触发，或关闭再重新打开。
