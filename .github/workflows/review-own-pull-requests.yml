@@ -1,7 +1,7 @@
-name: AI review own pull requests
+name: AI review pull requests
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
 
@@ -15,13 +15,13 @@ concurrency:
 
 jobs:
   review:
-    if: github.event.pull_request.user.login == 'bobvhfhh' && github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Check out pull request
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
           fetch-depth: 0
           persist-credentials: false
 
@@ -118,7 +118,9 @@ jobs:
         if: always() && steps.ai.outcome != 'skipped'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           VERDICT: ${{ steps.ai.outputs.verdict }}
+          WORKFLOW_CHANGES: ${{ steps.workflow_changes.outputs.changed }}
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ -f /tmp/ai-review-summary ]; then
@@ -130,14 +132,16 @@ jobs:
           {
             printf 'AI review: **%s**\n\n' "${VERDICT:-FAILED}"
             printf '%s\n' "$summary"
-            if [ "${VERDICT:-}" = "APPROVE" ] && [ "${{ steps.workflow_changes.outputs.changed }}" = "true" ]; then
+            if [ "${VERDICT:-}" = "APPROVE" ] && [ "$WORKFLOW_CHANGES" = "true" ]; then
               printf '\nThis pull request changes GitHub Actions workflows, so automatic merging is disabled for it. Review and merge it manually.\n'
+            elif [ "${VERDICT:-}" = "APPROVE" ] && [ "$PR_AUTHOR" != "bobvhfhh" ] && [ "$PR_AUTHOR" != "github-actions[bot]" ]; then
+              printf '\nAI approved this pull request. Automatic merging is limited to bobvhfhh and github-actions[bot], so this PR needs a maintainer to merge it.\n'
             fi
           } > "$body_file"
           gh pr comment "$PR_NUMBER" --body-file "$body_file"
 
       - name: Merge approved pull request
-        if: steps.ai.outputs.verdict == 'APPROVE' && steps.workflow_changes.outputs.changed == 'false' && job.status == 'success'
+        if: steps.ai.outputs.verdict == 'APPROVE' && steps.workflow_changes.outputs.changed == 'false' && (github.event.pull_request.user.login == 'bobvhfhh' || github.event.pull_request.user.login == 'github-actions[bot]') && job.status == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
