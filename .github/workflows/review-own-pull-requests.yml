@@ -34,12 +34,12 @@ jobs:
             node --check "$file"
           done < <(git diff --diff-filter=ACMR --name-only -z "$BASE_SHA"...HEAD -- '*.js' 'sing-mix_origin')
 
-      - name: Check for workflow changes
+      - name: Check for AI review workflow changes
         id: workflow_changes
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if git diff --name-only "$BASE_SHA"...HEAD -- '.github/workflows/**' | grep -q .; then
+          if git diff --name-only "$BASE_SHA"...HEAD -- '.github/workflows/review-own-pull-requests.yml' | grep -q .; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -133,7 +133,7 @@ jobs:
             printf 'AI review: **%s**\n\n' "${VERDICT:-FAILED}"
             printf '%s\n' "$summary"
             if [ "${VERDICT:-}" = "APPROVE" ] && [ "$WORKFLOW_CHANGES" = "true" ]; then
-              printf '\nThis pull request changes GitHub Actions workflows, so automatic merging is disabled for it. Review and merge it manually.\n'
+              printf '\nThis pull request changes the AI review workflow itself, so automatic merging is disabled for it. Review and merge it manually.\n'
             elif [ "${VERDICT:-}" = "APPROVE" ] && [ "$PR_AUTHOR" != "bobvhfhh" ] && [ "$PR_AUTHOR" != "github-actions[bot]" ]; then
               printf '\nAI approved this pull request. Automatic merging is limited to bobvhfhh and github-actions[bot], so this PR needs a maintainer to merge it.\n'
             fi

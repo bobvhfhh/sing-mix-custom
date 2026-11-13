@@ -33,6 +33,6 @@ GitHub Actions 每周一检查 [上游 Origin 脚本](https://github.com/Sakyvo/
 
 ### 审查 Pull Request
 
-`.github/workflows/review-own-pull-requests.yml` 会审查所有目标为 `main` 的非草稿 PR，检查修改脚本的 JavaScript 语法，将 PR 差异发送给上面配置的 AI 服务，并在 PR 下留言。AI 明确给出 `APPROVE` 且工作流步骤成功时，只有 `bobvhfhh` 或 `github-actions[bot]` 创建的 PR 才会自动以 squash 方式合并。其他账号的 PR 也会收到 AI 审查，但由维护者决定是否合并。拒绝、接口错误或语法检查失败都会阻止自动合并。该流程只审查普通 PR，不让 AI 改写 PR 文件。
+`.github/workflows/review-own-pull-requests.yml` 会审查所有目标为 `main` 的非草稿 PR，检查修改脚本的 JavaScript 语法，将 PR 差异发送给上面配置的 AI 服务，并在 PR 下留言。AI 明确给出 `APPROVE` 且工作流步骤成功时，只有 `bobvhfhh` 或 `github-actions[bot]` 创建的 PR 才会自动以 squash 方式合并。其他账号的 PR 也会收到 AI 审查，但由维护者决定是否合并。拒绝、接口错误或语法检查失败都会阻止自动合并。只有修改这份 AI 审查工作流本身的 PR 才需要人工合并，以防 PR 自己改写审查条件后自动放行。该流程只审查普通 PR，不让 AI 改写 PR 文件。
 
 新增或修改此工作流后，必须先把包含它的 PR 手动合入 `main`。此后，目标为 `main` 的 PR 在新建、更新、重新打开或从草稿转为就绪时会触发审查。已经打开的 PR 不会因工作流刚合入而自动补跑；合入后可向该 PR 推送一次更新来触发，或关闭再重新打开。
