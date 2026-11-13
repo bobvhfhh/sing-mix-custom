@@ -1,6 +1,0 @@
-# Bettbox / Mihomo rule override
-# Add these rules to the existing rules list.
-# RuntimeBroker.exe is intentionally excluded because Windows shares it across apps.
-rules:
-  - PROCESS-NAME,WinStore.App.exe,DIRECT
-  - PROCESS-NAME,StoreDesktopExtension.exe,DIRECT
