@@ -9,6 +9,8 @@ https://raw.githubusercontent.com/bobvhfhh/sing-mix-custom/refs/heads/main/sing-
 
 基于 [Sakyvo/sing-mix](https://github.com/Sakyvo/sing-mix) 的 Origin 脚本，仅将 Cloudflare 验证规则的策略从 `DIRECT` 改为 `main`，其余分流逻辑保持原样。
 
+脚本包含两条 Windows 微软商店进程直连规则：`WinStore.App.exe` 和 `StoreDesktopExtension.exe`。它们位于 Bettbox 使用的 `sing-mix_origin` 文件中，更新上方 Raw 链接即可获取。`RuntimeBroker.exe` 未添加，因为 Windows 的多个应用会共用该进程名。
+
 ## 自动 AI 更新
 
 GitHub Actions 每周一检查 [上游 Origin 脚本](https://github.com/Sakyvo/sing-mix/blob/main/sing-mix_origin)。发现上游或候选脚本有变化时，会调用你配置的 AI 服务比较上游与当前脚本，生成择优更新候选；通过 JavaScript 语法检查，并确认 Cloudflare 规则及日志修复的 8 条精确代理规则仍保留。验证通过后，Action 会更新自动分支、创建或更新 PR，并自动合并到 `main`。如果 AI 调用或检查失败，流程会停止，不更改 `main`。
@@ -29,7 +31,7 @@ GitHub Actions 每周一检查 [上游 Origin 脚本](https://github.com/Sakyvo/
 
 可在仓库 **Actions → AI review upstream sing-mix → Run workflow** 手动触发检查。定时任务使用 GitHub Actions；若 Actions 因仓库长期无活动被停用，需要在 Actions 页面重新启用。
 
-### 审查本人创建的普通 PR
+### 审查 Pull Request
 
 `.github/workflows/review-own-pull-requests.yml` 会审查所有目标为 `main` 的非草稿 PR，检查修改脚本的 JavaScript 语法，将 PR 差异发送给上面配置的 AI 服务，并在 PR 下留言。AI 明确给出 `APPROVE` 且工作流步骤成功时，只有 `bobvhfhh` 或 `github-actions[bot]` 创建的 PR 才会自动以 squash 方式合并。其他账号的 PR 也会收到 AI 审查，但由维护者决定是否合并。拒绝、接口错误或语法检查失败都会阻止自动合并。该流程只审查普通 PR，不让 AI 改写 PR 文件。
 

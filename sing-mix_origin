@@ -290,6 +290,8 @@ const STATIC_RULES = [
   ...uniq(FORCE_PROXY_DOMAINS).map((d) => `DOMAIN,${d},main`),
 
   "RULE-SET,cloudflare,main",
+  "PROCESS-NAME,WinStore.App.exe,DIRECT",
+  "PROCESS-NAME,StoreDesktopExtension.exe,DIRECT",
   "RULE-SET,private,DIRECT",
   "RULE-SET,private-ip,DIRECT,no-resolve",
   "RULE-SET,googlefcm,DIRECT",
