@@ -23,6 +23,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check changed JavaScript syntax
         env:
@@ -58,7 +59,7 @@ jobs:
             echo "Missing repository secret AI_API_KEY" >&2
             exit 1
           fi
-          python3 - <<'PY'
+          python3 -I - <<'PY'
           import json, os, pathlib, subprocess, urllib.error, urllib.parse, urllib.request
 
           diff = subprocess.run(
@@ -116,9 +117,9 @@ jobs:
       - name: Post AI review result
         if: always() && steps.ai.outcome != 'skipped'
         env:
-          GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           VERDICT: ${{ steps.ai.outputs.verdict }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ -f /tmp/ai-review-summary ]; then
             summary="$(cat /tmp/ai-review-summary)"
